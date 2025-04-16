@@ -174,7 +174,7 @@ double H_expect_oth(const gsl_vector *x, void *par)
         }
         norm+=ove[i][i]*gsl_vector_get(x,i)*gsl_vector_get(x,i);
     }
-    double res=H_sum/norm;
+    double res=H_sum/norm+(norm-1)*(norm-1)*100;
     for(int i=0;i<index;i++)
     {
         double oth=0;
@@ -182,7 +182,7 @@ double H_expect_oth(const gsl_vector *x, void *par)
         {
             oth+=ove[j][j]*vec_pre[i][j]*gsl_vector_get(x,j);
         }
-        res+=oth*oth*10000;
+        res+=oth*oth*100;
     }
     return res;
 }
@@ -208,7 +208,7 @@ double deltaH_oth(const gsl_vector *x, void *par)
         }
         norm+=ove[i][i]*gsl_vector_get(x,i)*gsl_vector_get(x,i);
     }
-    double res=H2_sum/norm-H_sum/norm*H_sum/norm+(norm-1)*(norm-1)*100;
+    double res=H2_sum/norm-H_sum/norm*H_sum/norm;
     for(int i=0;i<index;i++)
     {
         double oth=0;
@@ -216,7 +216,7 @@ double deltaH_oth(const gsl_vector *x, void *par)
         {
             oth+=ove[j][j]*vec_pre[i][j]*gsl_vector_get(x,j);
         }
-        res+=oth*oth*100;
+        res+=oth*oth*1000000;
     }
     return res;
 }
@@ -269,8 +269,8 @@ double H_expect(const gsl_vector *x, void *par)
 int main(void)
 {
     time2rand();
-    int L=9;
-    cin>>L;//输入要引入多少个三角函数组成试探波函数
+    int L=20;
+    cin>>L;
     double **H=new double *[L];
     double **H2=new double *[L];
     double **ove=new double *[L];
@@ -332,7 +332,7 @@ int main(void)
     par[5]=(void *)H2;
   /* Initialize method and iterate */
   minex_func.n = L;
-  minex_func.f = deltaH_oth;
+  minex_func.f = H_expect_oth;
   minex_func.params = par;
 
   s = gsl_multimin_fminimizer_alloc (T, L);
@@ -343,78 +343,72 @@ int main(void)
   gsl_rng *r= gsl_rng_alloc(rngT);;
   gsl_rng_default_seed = ((unsigned long)(time(NULL)));
   int count_for_simplex=0;
-    // for(int index=0;index<L;index++)
-    do
+    for(int index=0;index<L;index++)
     {
-        par[1]=&count;
-        // gsl_vector_set_all(x,0.2);
-        // gsl_vector_set_all(ss,0.1);
-        for(int i=0;i<L;i++)
+        par[1]=&index;
+        double min=100;
+        for(int repeat=0;repeat<1000;repeat++)
         {
-            gsl_vector_set (x, i,gauss(0,0.1));
-            gsl_vector_set (ss,i,gauss(0,0.1));
-        }
-        gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
-        size_t iter=0;
-        do
-            {
-            iter++;
-            status = gsl_multimin_fminimizer_iterate(s);
-
-            if (status)
-                break;
-
-            size = gsl_multimin_fminimizer_size (s);
-            status = gsl_multimin_test_size (size, 1e-8);
-
-            // if (status == GSL_SUCCESS)
-            //     {
-            //     printf ("converged to minimum at\n");
-            //     }
-
-            // printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
-            //         iter,
-            //         gsl_vector_get (s->x, 0),
-            //         gsl_vector_get (s->x, 1),
-            //         s->fval, size);
-            }
-        while (status == GSL_CONTINUE && iter < 10000);
-        count_for_simplex++;
-        // cout<<s->fval<<endl;
-        if(count_for_simplex%100==0)
-        {
-            cout<<count_for_simplex<<' '<<s->fval<<endl;
-        }
-        if(s->fval<0.01)
-        {
-            cout<<"one fit: "<<s->fval<<endl;
             for(int i=0;i<L;i++)
             {
-                vec[count][i]=gsl_vector_get(s->x,i);
+                gsl_vector_set (x, i,gauss(0,0.1));
+                gsl_vector_set (ss,i,gauss(0,0.01));
             }
-            E[count]=H_expect(s->x,par);
-            deltaE[count]=deltaH(s->x,par);
-            count++;
+            gsl_multimin_fminimizer_set (s, &minex_func, x, ss);
+            size_t iter=0;
+            do
+                {
+                iter++;
+                status = gsl_multimin_fminimizer_iterate(s);
+
+                if (status)
+                    break;
+
+                size = gsl_multimin_fminimizer_size (s);
+                status = gsl_multimin_test_size (size, 1e-8);
+
+                // if (status == GSL_SUCCESS)
+                //     {
+                //     printf ("converged to minimum at\n");
+                //     }
+
+                // printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
+                //         iter,
+                //         gsl_vector_get (s->x, 0),
+                //         gsl_vector_get (s->x, 1),
+                //         s->fval, size);
+                }
+            while (status == GSL_CONTINUE && iter < 10000);
+            if(min>s->fval)
+            {
+                for(int i=0;i<L;i++)
+                {
+                    vec[index][i]=gsl_vector_get(s->x,i);
+                }
+                E[index]=H_expect(s->x,par);
+            }
         }
+        
+        
     }
-    while(count<L/3);
-    cout<<"run "<<count_for_simplex<<" times."<<endl;
     cout<<L<<' ';
-    for(int i=0;i<count;i++)
+    for(int i=0;i<L;i++)
     {
         cout<<E[i]<<' ';
     }
     cout<<endl;
-    cout<<L<<' ';
-    for(int i=0;i<count;i++)
-    {
-        cout<<deltaE[i]<<' ';
-    }
-    cout<<endl;
+    // for(int i=0;i<L;i++)
+    // {
+    //     for(int k=0;k<L;k++)
+    //     {
+    //         cout<<vec[i][k]<<' ';
+    //     }
+    //     cout<<endl;
+    // }
     for(double x=-4;x<4.1;x+=0.2)
     {
         cout<<x<<' ';
-        for(int i=0;i<count;i++)
+        for(int i=0;i<L;i++)
         {
             double y=0;
             for(int k=0;k<L;k++)
