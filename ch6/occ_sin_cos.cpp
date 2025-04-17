@@ -158,11 +158,11 @@ void mat_out(double **H,double **H2,double **ove,int L)
 double H_expect_oth(const gsl_vector *x, void *par)
 {
     void **par_arr=(void **)par;
-    int L=*((int *)(par_arr[0]));
-    int index=*((int *)(par_arr[1]));
-    double **vec_pre=(double **)(par_arr[2]);
-    double **ove=(double **)(par_arr[3]);
-    double **H=(double **)(par_arr[4]);
+    int L=*((int *)(par_arr[0]));//三角函数个数
+    int index=*((int *)(par_arr[1]));//明确当前波函数的排序
+    double **vec_pre=(double **)(par_arr[2]);//传递此前已得到波函数
+    double **ove=(double **)(par_arr[3]);//传递重叠数值
+    double **H=(double **)(par_arr[4]);//传递哈密顿量矩阵元
 
     double H_sum=0;
     double norm=0;
@@ -174,7 +174,7 @@ double H_expect_oth(const gsl_vector *x, void *par)
         }
         norm+=ove[i][i]*gsl_vector_get(x,i)*gsl_vector_get(x,i);
     }
-    double res=H_sum/norm+(norm-1)*(norm-1)*100;
+    double res=H_sum/norm+(norm-1)*(norm-1)*100;//(norm-1)*(norm-1)*100为归一化约束
     for(int i=0;i<index;i++)
     {
         double oth=0;
@@ -182,7 +182,7 @@ double H_expect_oth(const gsl_vector *x, void *par)
         {
             oth+=ove[j][j]*vec_pre[i][j]*gsl_vector_get(x,j);
         }
-        res+=oth*oth*100;
+        res+=oth*oth*100;//oth*oth*100为正交化约束
     }
     return res;
 }
@@ -386,10 +386,9 @@ int main(void)
                     vec[index][i]=gsl_vector_get(s->x,i);
                 }
                 E[index]=H_expect(s->x,par);
+                min=s->fval;
             }
         }
-        
-        
     }
     cout<<L<<' ';
     for(int i=0;i<L;i++)
