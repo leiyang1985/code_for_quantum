@@ -6,7 +6,7 @@ using namespace std;
 #include <gsl/gsl_eigen.h>
 
 double ove_f(int *a,int n);
-
+//<|c1~cn[a1~an,b1~bn]d1~dn|>
 double ove_f(int *c,int nc,int *a,int na,int *b,int nb,int *d,int nd)
 {
     //<|>=1
@@ -356,8 +356,10 @@ void mat_out(double **H,double **ove, int **basis_store,int dim,double *f_val,in
         }
     }
 }
+/**************基矢产生的递归操作，其中which_state明确当前要分配哪一个单粒子状态上的粒子个数，N_left表示当前还能分配的粒子个数，isstore用于明确当前操作只是用于计算基矢的个数，还是需要存储基磁 */
 void loop_one_state(int L,bool isf,int which_state,int N_left,int *basis,int **&basis_store,int &dim,bool isstore)
 {
+    /*************明确当前单粒子状态上最多能容纳的粒子数 */
     int p_max=N_left;
     if(isf)
     {
@@ -366,6 +368,7 @@ void loop_one_state(int L,bool isf,int which_state,int N_left,int *basis,int **&
             p_max=1;
         }
     }
+    /*******************如果分配到最后一个单粒子状态，首先要判断最后一个单粒子状态能否容纳剩下的所有粒子，如可以容纳，则将所有粒子放入最后一个单粒子状态，并计数（存储） */
     if(which_state==L-1)
     {
         if(isf&&N_left>1)
@@ -384,6 +387,7 @@ void loop_one_state(int L,bool isf,int which_state,int N_left,int *basis,int **&
     }
     else
     {
+        /******************如果还没有分配最后一个单粒子状态，那么就循环当前单粒子状态上所有可能的粒子占据数，将要进入下一步：分配后一个单粒子状态（which_state+1）上的占据数，注意下一步可分配的粒子数是当前可分配粒子数减去当前单粒子状态已分配的粒子数（N_left-basis[which_state]） */
         for(basis[which_state]=0;basis[which_state]<=p_max;basis[which_state]++)
         {
             loop_one_state(L,isf,which_state+1,N_left-basis[which_state],basis,basis_store,dim,isstore);
@@ -391,14 +395,17 @@ void loop_one_state(int L,bool isf,int which_state,int N_left,int *basis,int **&
     }
     
 }
+/****************基矢产生程序，N为粒子数，isf明确是否为波色子，basis_store用于存储每一个基矢中的每个单粒子状态上粒子的占据个数，dim用于返里基矢的个数 */
 void basis_out(int L,int N,bool isf,int **&basis_store,int &dim)
 {
     int basis_one[L];
     if(L>=1)
     {
+        /*********先看基矢有多少 */
         dim=0;
         loop_one_state(L,isf,0,N,basis_one,basis_store,dim,false);
         cout<<"the dim is "<<dim<<endl;
+        /**************由客户判断是否还向下计算 */
         cout<<"do you want to go on?(Yes:1; NO:0)";
         int isgoon=0;
         cin>>isgoon;
@@ -410,6 +417,7 @@ void basis_out(int L,int N,bool isf,int **&basis_store,int &dim)
                 basis_store[i]=new int [L];
             }
             dim=0;
+            /*******先从第0个状态开始填粒子，可分配粒子数为N */
             loop_one_state(L,isf,0,N,basis_one,basis_store,dim,true);
         }
         else

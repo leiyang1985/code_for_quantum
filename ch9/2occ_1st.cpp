@@ -115,7 +115,7 @@ int main(void)
         double eval_i = gsl_vector_get(eval, i);
         gsl_vector_view evec_i = gsl_matrix_column(evec, i);
 
-        /****************交换粒子而后计算重叠 */
+        /****************交换粒子所得波函数 */
         double rev_vec[L*L];
         for(int k=0;k<L;k++)
         {
@@ -124,6 +124,7 @@ int main(void)
                 rev_vec[l*L+k]=gsl_vector_get(&(evec_i.vector),k*L+l);
             }
         }
+        /**************计算交换粒子前后的重叠 */
         double sum=0;
         for(int k=0;k<L;k++)
         {
