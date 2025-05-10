@@ -126,7 +126,7 @@ void mat_out(double **norm,double **x,double **x2,int L)
     }
     gsl_integration_workspace_free(w);
 }
-
+/***************************|\phi(x,t)|^2 */
 double phi(double *cn,double x,double t,int L)
 {
     double res=0;
@@ -141,14 +141,15 @@ double phi(double *cn,double x,double t,int L)
     return res;
 }
 
-double mean(double *cn,double **x,double t,int L)
+/*****************f(x)实函数期望：<f(x)> */
+double mean(double *cn,double **f,double t,int L)
 {
     double res=0;
     for(int i=0;i<L;i++)
     {
         for(int j=0;j<L;j++)
         {
-            res+=cn[i]*cn[j]*cos((i-j)*t)*x[i][j];
+            res+=cn[i]*cn[j]*cos((i-j)*t)*f[i][j];
         }
     }
     return res;
