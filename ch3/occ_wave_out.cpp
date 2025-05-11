@@ -21,13 +21,13 @@ int func_the (double x, const double y[], double f[],void *params)
 
 int main ()
 {
-  double E=11;
+  double E=1;
     gsl_odeiv2_system sys = {func, NULL, 2, &E};
     gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45, 1e-7, 1e-7, 0);
 
-  double x0 = -10;
-  double y[2] = { 0, 1e-14};
-  while(x0<10)
+  double x0 = -5;
+  double y[2] = { 0, 1};
+  while(x0<=5)
   {
     gsl_odeiv2_driver_apply (d, &x0, x0+0.2, y);
     if(x0>-4.3&&x0<4.3)
